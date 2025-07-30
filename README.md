@@ -1,4 +1,4 @@
-# uv-shell-hook
+# `uv-shell-hook`
 
 A cross-platform shell integration for [uv](https://github.com/astral-sh/uv) that adds convenient
 `uv activate` and `uv deactivate` commands to manage Python virtual environments across different
