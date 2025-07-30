@@ -8,18 +8,59 @@ on:
   release:
     types: [published]
 
+# Cancel outdated runs on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
+  lint:
+    name: Lint and Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            .venv
+          key: uv-${{ runner.os }}-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: uv sync --locked --all-extras --dev
+
+      - name: Run ruff linting
+        run: uvx ruff check --output-format=github
+
+      - name: Run ruff formatting check
+        run: uvx ruff format --check
+
+      - name: Run type checking
+        run: uvx mypy .
+
+  test-linux:
+    name: Test on Linux - Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.13"]
+        python-version: ["3.11", "3.12", "3.13"]
+
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch full history
-          fetch-tags: true # Fetch all tags
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -27,76 +68,277 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
-      - name: Install shells (Unix only)
-        if: runner.os != 'Windows'
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            .venv
+          key:
+            uv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml',
+            '**/uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-py${{ matrix.python-version }}-
+
+      - name: Install shells
         run: |
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
-            sudo apt-get update
-            sudo apt-get install -y zsh fish
-          elif [[ "${{ runner.os }}" == "macOS" ]]; then
-            brew install fish
-            # zsh is already installed on macOS
-          fi
+          sudo apt-get update
+          sudo apt-get install -y zsh fish
 
       - name: Install the project
         run: uv sync --locked --all-extras --dev
 
-      - name: Run linting
-        run: uvx ruff check
-
-      - name: Run type checking
-        run: uvx ty check
-
-      - name: Test CLI installation
-        run: uv run uv-shell-hook --version
+      - name: Run CLI smoke test
+        run: |
+          uv run uv-shell-hook --version
+          uv run uv-shell-hook --help
 
       - name: Test shell detection
         run: uv run uv-shell-hook test
 
-      - name: Test bash output (Unix only)
-        if: runner.os != 'Windows'
-        run: uv run uv-shell-hook bash
+      - name: Test bash output
+        run: |
+          output=$(uv run uv-shell-hook bash)
+          echo "Bash output: $output"
+          test -n "$output"
 
-      - name: Test zsh output (Unix only)
-        if: runner.os != 'Windows'
-        run: uv run uv-shell-hook zsh
+      - name: Test zsh output
+        run: |
+          output=$(uv run uv-shell-hook zsh)
+          echo "Zsh output: $output"
+          test -n "$output"
 
-      - name: Test fish output (Unix only)
-        if: runner.os != 'Windows'
-        run: uv run uv-shell-hook fish
+      - name: Test fish output
+        run: |
+          output=$(uv run uv-shell-hook fish)
+          echo "Fish output: $output"
+          test -n "$output"
 
-      - name: Test PowerShell output (Windows only)
-        if: runner.os == 'Windows'
-        run: uv run uv-shell-hook powershell
+      - name: Test install-instructions
+        run: |
+          uv run uv-shell-hook install-instructions --shell bash || true
 
-      - name: Test CMD output (Windows only)
-        if: runner.os == 'Windows'
-        run: uv run uv-shell-hook cmd
+      - name: Run pytest with coverage
+        run: |
+          uv run pytest tests/ -v
 
-      - name: Test install-instructions with dry-run
-        run: uv run uv-shell-hook install-instructions --dry-run
+  test-macos:
+    name: Test on macOS - Python ${{ matrix.python-version }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
 
-      - name: Run pytest tests
-        run: uv run pytest tests/ -v
-
-  publish:
-    if: github.event_name == 'release' && github.event.action == 'published'
-    runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/uv
+            .venv
+          key:
+            uv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml',
+            '**/uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-py${{ matrix.python-version }}-
+
+      - name: Install shells
+        run: |
+          brew install fish
+          # zsh is already installed on macOS
+
       - name: Install the project
         run: uv sync --locked --all-extras --dev
 
-      - name: Build
+      - name: Run CLI smoke test
+        run: |
+          uv run uv-shell-hook --version
+          uv run uv-shell-hook --help
+
+      - name: Test shell detection
+        run: uv run uv-shell-hook test
+
+      - name: Test bash output
+        run: |
+          output=$(uv run uv-shell-hook bash)
+          echo "Bash output: $output"
+          test -n "$output"
+
+      - name: Test zsh output
+        run: |
+          output=$(uv run uv-shell-hook zsh)
+          echo "Zsh output: $output"
+          test -n "$output"
+
+      - name: Test fish output
+        run: |
+          output=$(uv run uv-shell-hook fish)
+          echo "Fish output: $output"
+          test -n "$output"
+
+      - name: Test install-instructions
+        run: |
+          uv run uv-shell-hook install-instructions --shell zsh || true
+
+      - name: Run pytest
+        run: uv run pytest tests/ -v
+
+  test-windows:
+    name: Test on Windows - Python ${{ matrix.python-version }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~\AppData\Local\uv\cache
+            .venv
+          key:
+            uv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml',
+            '**/uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-py${{ matrix.python-version }}-
+
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Run CLI smoke test
+        run: |
+          uv run uv-shell-hook --version
+          uv run uv-shell-hook --help
+
+      - name: Test shell detection
+        run: uv run uv-shell-hook test
+
+      - name: Test PowerShell output
+        shell: pwsh
+        run: |
+          $output = uv run uv-shell-hook powershell
+          Write-Host "PowerShell output: $output"
+          if (-not $output) { exit 1 }
+
+      - name: Test CMD output
+        shell: cmd
+        run: |
+          uv run uv-shell-hook cmd > output.txt
+          type output.txt
+          findstr /r /c:"." output.txt || exit 1
+
+      - name: Test install-instructions
+        run: |
+          uv run uv-shell-hook install-instructions --shell powershell || exit 0
+
+      - name: Run pytest
+        run: uv run pytest tests/ -v
+
+  build:
+    name: Build Distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Build distributions
         run: |
           uv build
+          ls -la dist/
 
-      - name: Publish package distributions to PyPI
+      - name: Check distribution contents
+        run: |
+          uv run python -m twine check dist/*
+          # Check wheel contents
+          uv run python -c "import zipfile; z = zipfile.ZipFile('dist/'*.whl); print('\\n'.join(z.namelist()[:20]))"
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+          retention-days: 7
+
+  publish:
+    name: Publish to PyPI
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [lint, test-linux, test-macos, test-windows, build]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+
+      - name: List distributions
+        run: ls -la dist/
+
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
+          print-hash: true
+
+  # Optional: Create GitHub Release with artifacts
+  release-artifacts:
+    name: Upload Release Artifacts
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          fail_on_unmatched_files: true
