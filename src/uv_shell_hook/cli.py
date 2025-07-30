@@ -143,7 +143,7 @@ def install_instructions(
 @app.command()
 def zsh():
     """Print zsh shell function for uv command override."""
-    syntax = Syntax(_get_script_content("zsh.sh"), "zsh", theme="github", line_numbers=False)
+    syntax = Syntax(_get_script_content("bash.sh"), "zsh", theme="github", line_numbers=False)
     console.print(syntax)
 
 

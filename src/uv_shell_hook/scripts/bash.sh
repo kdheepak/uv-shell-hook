@@ -93,10 +93,3 @@ uv() {
             ;;
     esac
 }
-
-# Add completion support for bash/zsh
-if [[ -n ${BASH_VERSION:-} ]]; then
-    complete -W "activate deactivate" -o default uv
-elif [[ -n ${ZSH_VERSION:-} ]]; then
-    compdef '_uv_completion() { _arguments "1:command:(activate deactivate)" "*::arg:->args" }' uv
-fi
