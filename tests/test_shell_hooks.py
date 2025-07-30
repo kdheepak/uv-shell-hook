@@ -108,7 +108,7 @@ def run_zsh_with_hook(command: str, cwd: Path, hook_file: Path) -> subprocess.Co
 
 def run_fish_with_hook(command: str, cwd: Path, hook_file: Path) -> subprocess.CompletedProcess:
     """Run a fish command with the shell hook sourced from file."""
-    full_command = f"source {hook_file}; {command}"
+    full_command = f"source {hook_file}; and {command}"
     
     return subprocess.run(
         ["fish", "-c", full_command],
@@ -269,7 +269,7 @@ class TestFishHook:
     def test_activate_virtual_environment(self, temp_project: Path, fish_hook_file: Path):
         """Test activating a virtual environment."""
         result = run_fish_with_hook(
-            "uv activate; and echo 'VIRTUAL_ENV='$VIRTUAL_ENV",
+            "uv activate && echo 'VIRTUAL_ENV='$VIRTUAL_ENV",
             temp_project,
             fish_hook_file
         )
@@ -281,7 +281,7 @@ class TestFishHook:
     def test_deactivate_virtual_environment(self, temp_project: Path, fish_hook_file: Path):
         """Test deactivating a virtual environment."""
         result = run_fish_with_hook(
-            "uv activate; and uv deactivate; and echo 'VIRTUAL_ENV='$VIRTUAL_ENV",
+            "uv activate && uv deactivate && echo 'VIRTUAL_ENV='$VIRTUAL_ENV",
             temp_project,
             fish_hook_file
         )

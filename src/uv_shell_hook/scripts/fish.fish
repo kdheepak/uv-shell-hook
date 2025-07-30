@@ -54,9 +54,9 @@ function uv --wraps=uv --description 'Enhanced uv with virtual environment activ
             # Determine activation script location based on platform
             set -l activate_script
             if test -n "$WINDIR" -o (uname -s | string match -q "*MSYS*") -o (uname -s | string match -q "*CYGWIN*")
-                set activate_script "$venv_path/Scripts/activate"
+                set activate_script "$venv_path/Scripts/activate.fish"
             else
-                set activate_script "$venv_path/bin/activate"
+                set activate_script "$venv_path/bin/activate.fish"
             end
 
             # Source the activation script
