@@ -93,7 +93,7 @@ uv() {
             
             if command -v deactivate >/dev/null 2>&1; then
                 deactivate
-                warn "Deactivated: ${CYAN}${old_venv}${NOCOLOR}"
+                info "Deactivated: ${CYAN}${old_venv}${NOCOLOR}"
             else
                 error "deactivate function not available"
                 return 1
