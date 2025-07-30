@@ -8,56 +8,57 @@ function uv {
     )
 
     # Logging helper functions
-    function Info([string]$Message) {
+    function LogInfo([string]$Message) {
         Write-Host "✓ $Message" -ForegroundColor Green
     }
 
-    function Warn([string]$Message) {
+    function LogWarn([string]$Message) {
         Write-Host "Warning: $Message" -ForegroundColor Yellow
     }
 
-    function Error([string]$Message) {
+    function LogError([string]$Message) {
         Write-Host "Error: $Message" -ForegroundColor Red
     }
 
-    function Note([string]$Message) {
+    function LogNote([string]$Message) {
         Write-Host $Message -ForegroundColor DarkGray
     }
 
     if (-not $Command) {
-        Write-Host "Usage: uv {activate|deactivate|...}" -ForegroundColor White
+        Write-Host 'Usage: uv {activate|deactivate|...}' -ForegroundColor White
         return
     }
 
     switch ($Command) {
-        "activate" {
-            $InputPath = if ($Args.Count -gt 0) { $Args[0] } else { "." }
-            $VenvPath = ""
+        'activate' {
+            $InputPath = if ($Args.Count -gt 0) { $Args[0] } else { '.' }
+            $VenvPath = ''
+            $ActivateScript = ''
+
             # Determine virtualenv folder
             $VirtualenvsFolder = $env:WORKON_HOME
             if (-not $VirtualenvsFolder) {
                 if ($env:USERPROFILE) {
-                    $VirtualenvsFolder = Join-Path $env:USERPROFILE ".virtualenvs"
+                    $VirtualenvsFolder = Join-Path $env:USERPROFILE '.virtualenvs'
                 } elseif ($env:HOME) {
-                    $VirtualenvsFolder = Join-Path $env:HOME ".virtualenvs"
+                    $VirtualenvsFolder = Join-Path $env:HOME '.virtualenvs'
                 } else {
-                    Write-Host "Error: Neither WORKON_HOME, USERPROFILE, nor HOME is set" -ForegroundColor Red
+                    LogError 'Neither WORKON_HOME, USERPROFILE, nor HOME is set'
                     return
                 }
             }
-            $ActivateScript = ""
 
             # Normalize input path
             $InputPath = $InputPath.TrimEnd('\', '/')
 
-            if ($InputPath -eq ".") {
+            if ($InputPath -eq '.') {
                 $InputPath = Get-Location
             } elseif (-not [System.IO.Path]::IsPathRooted($InputPath)) {
                 $InputPath = Join-Path (Get-Location) $InputPath
             }
 
             $PossiblePaths = @(
-                (Join-Path $InputPath ".venv"),
+                (Join-Path $InputPath '.venv'),
                 $InputPath,
                 (Join-Path $VirtualenvsFolder $InputPath),
                 (Join-Path $VirtualenvsFolder (Split-Path $InputPath -Leaf))
@@ -65,15 +66,15 @@ function uv {
 
             foreach ($Path in $PossiblePaths) {
                 if (Test-Path $Path -PathType Container) {
-                    if (Test-Path (Join-Path $Path "Scripts\activate.ps1")) {
+                    if (Test-Path (Join-Path $Path 'Scripts\activate.ps1')) {
                         $VenvPath = $Path
-                        $ActivateScript = Join-Path $Path "Scripts\activate.ps1"
+                        $ActivateScript = Join-Path $Path 'Scripts\activate.ps1'
                         break
-                    } elseif (Test-Path (Join-Path $Path "bin\activate")) {
+                    } elseif (Test-Path (Join-Path $Path 'bin\activate')) {
                         $VenvPath = $Path
-                        $ActivateScript = Join-Path $Path "Scripts\activate.ps1"
+                        $ActivateScript = Join-Path $Path 'Scripts\activate.ps1'
                         if (-not (Test-Path $ActivateScript)) {
-                            Error "PowerShell activation script not found. This venv may not be compatible with PowerShell."
+                            LogError 'PowerShell activation script not found. This venv may not be compatible with PowerShell.'
                             return
                         }
                         break
@@ -82,38 +83,38 @@ function uv {
             }
 
             if (-not $VenvPath -or -not (Test-Path $VenvPath)) {
-                Error "Virtual environment not found"
-                Note "Searched for: $InputPath"
-                Note "Locations checked:"
+                LogError 'Virtual environment not found'
+                LogNote "Searched for: $InputPath"
+                LogNote 'Locations checked:'
                 Write-Host "  - $(Join-Path $VirtualenvsFolder "$InputPath\.venv")" -ForegroundColor Cyan
                 Write-Host "  - $(Join-Path $VirtualenvsFolder $InputPath)" -ForegroundColor Cyan
-                Write-Host "  - $(Join-Path $InputPath ".venv")" -ForegroundColor Cyan
+                Write-Host "  - $(Join-Path $InputPath '.venv')" -ForegroundColor Cyan
                 Write-Host "  - $InputPath" -ForegroundColor Cyan
-                Note "You can create a virtual environment using:"
-                Write-Host "uv venv <name-of-env>" -ForegroundColor Cyan
+                LogNote 'You can create a virtual environment using:'
+                Write-Host '  uv venv <name-of-env>' -ForegroundColor Cyan
                 return
             }
 
             if (Test-Path $ActivateScript) {
                 & $ActivateScript
-                Info "Activated: $VenvPath"
+                LogInfo "Activated: $VenvPath"
             } else {
-                Error "Activation script not found: $ActivateScript"
+                LogError "Activation script not found: $ActivateScript"
             }
         }
 
-        "deactivate" {
+        'deactivate' {
             $OldVenv = $env:VIRTUAL_ENV
             if (-not $OldVenv) {
-                Warn "No virtual environment is active"
+                LogWarn 'No virtual environment is active'
                 return
             }
 
             if (Get-Command deactivate -ErrorAction SilentlyContinue) {
                 deactivate
-                Info "Deactivated: $OldVenv"
+                LogInfo "Deactivated: $OldVenv"
             } else {
-                Error "deactivate function not available"
+                LogError 'deactivate function not available'
             }
         }
 
