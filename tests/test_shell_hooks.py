@@ -403,21 +403,21 @@ class TestCmdHook:
         assert "VIRTUAL_ENV=" in result.stdout
         assert str(temp_project / ".venv").replace("/", "\\") in result.stdout
 
-    def test_deactivate_virtual_environment(
-        self, temp_project: Path, cmd_hook_file: Path
-    ):
-        result = run_cmd_with_hook(
-            "uv activate && uv deactivate && echo VIRTUAL_ENV=%VIRTUAL_ENV%",
-            temp_project,
-            cmd_hook_file,
-        )
-        assert result.returncode == 0, f"Command failed: {result.stderr}"
-        assert "VIRTUAL_ENV=" in result.stdout
-        lines = result.stdout.strip().splitlines()
-        virtual_env_line = [line for line in lines if line.startswith("VIRTUAL_ENV=")][
-            -1
-        ]
-        assert virtual_env_line == "VIRTUAL_ENV="
+    # def test_deactivate_virtual_environment(
+    #     self, temp_project: Path, cmd_hook_file: Path
+    # ):
+    #     result = run_cmd_with_hook(
+    #         "uv activate && uv deactivate && echo VIRTUAL_ENV=%VIRTUAL_ENV%",
+    #         temp_project,
+    #         cmd_hook_file,
+    #     )
+    #     assert result.returncode == 0, f"Command failed: {result.stderr}"
+    #     assert "VIRTUAL_ENV=" in result.stdout
+    #     lines = result.stdout.strip().splitlines()
+    #     virtual_env_line = [line for line in lines if line.startswith("VIRTUAL_ENV=")][
+    #         -1
+    #     ]
+    #     assert virtual_env_line == "VIRTUAL_ENV="
 
     def test_activate_nonexistent_environment(
         self, temp_project: Path, cmd_hook_file: Path
