@@ -193,8 +193,9 @@ def test():
     workon = os.environ.get("WORKON_HOME", os.path.expanduser("~/.virtualenvs"))
     for template in VENV_SEARCH_PATHS:
         path = template.format(input_path="myproject", workon_home=workon)
-        exists = "✓" if os.path.exists(os.path.expanduser(path)) else "✗"
-        console.print(f"  {exists} {path}")
+        exists_mark = ":heavy_check_mark:" if os.path.exists(os.path.expanduser(path)) else ":x:"
+        exists_color = "green" if os.path.exists(os.path.expanduser(path)) else "red"
+        console.print(f"  [{exists_color}]{exists_mark}[/] {path}")
 
 
 @app.callback(invoke_without_command=True)
