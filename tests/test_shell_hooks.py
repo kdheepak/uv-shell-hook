@@ -400,11 +400,10 @@ class TestPowershellHook:
     ):
         """Test that deactivating when no environment is active fails gracefully."""
         result = run_powershell_with_hook(
-            "uv deactivate",
+            "$env:VIRTUAL_ENV=''; Remove-Item function:deactivate -ErrorAction SilentlyContinue; uv deactivate",
             temp_project,
             powershell_hook_file,
         )
-
         assert result.returncode != 0
         assert "No virtual environment is active" in result.stdout
 
