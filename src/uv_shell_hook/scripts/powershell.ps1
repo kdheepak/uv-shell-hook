@@ -33,7 +33,18 @@ function uv {
         "activate" {
             $InputPath = if ($Args.Count -gt 0) { $Args[0] } else { "." }
             $VenvPath = ""
-            $VirtualenvsFolder = if ($env:WORKON_HOME) { $env:WORKON_HOME } else { Join-Path $env:USERPROFILE ".virtualenvs" }
+            # Determine virtualenv folder
+            $VirtualenvsFolder = $env:WORKON_HOME
+            if (-not $VirtualenvsFolder) {
+                if ($env:USERPROFILE) {
+                    $VirtualenvsFolder = Join-Path $env:USERPROFILE ".virtualenvs"
+                } elseif ($env:HOME) {
+                    $VirtualenvsFolder = Join-Path $env:HOME ".virtualenvs"
+                } else {
+                    Write-Host "Error: Neither WORKON_HOME, USERPROFILE, nor HOME is set" -ForegroundColor Red
+                    return
+                }
+            }
             $ActivateScript = ""
 
             # Normalize input path
