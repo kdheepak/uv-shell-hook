@@ -152,13 +152,20 @@ def run_fish_with_hook(
     )
 
 
+def get_short_path_name(long_name):
+    import ctypes
+
+    _buf = ctypes.create_unicode_buffer(260)
+    ctypes.windll.kernel32.GetShortPathNameW(long_name, _buf, 260)
+    return _buf.value
+
+
 def run_cmd_with_hook(
     command: str, cwd: Path, hook_file: Path
 ) -> subprocess.CompletedProcess:
     """Run a cmd.exe command with the shell hook sourced from file."""
-    # In cmd, you can call the script first, then run the command:
-    # Use `call` to execute batch files in current shell
-    full_command = f'call "{hook_file}" && {command}'
+    hook_path = get_short_path_name(str(hook_file.resolve()))
+    full_command = f'call "{hook_path}" && {command}'
 
     return subprocess.run(
         ["cmd", "/d", "/c", full_command],
