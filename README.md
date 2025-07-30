@@ -14,12 +14,12 @@ shells and operating systems.
 ## Installation
 
 ```bash
-uv tool install uv-shell-hook
-uv-shell-hook --help
+$ uv tool install uv-shell-hook
+$ uv-shell-hook --help
 
 # or use it with uvx directly
 
-uvx uv-shell-hook --help
+$ uvx uv-shell-hook --help
 ```
 
 ## Quick Start
