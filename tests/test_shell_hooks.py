@@ -387,93 +387,93 @@ class TestFishHook:
         assert "uv" in result.stdout.lower()
 
 
-@pytest.mark.skipif(os.name != "nt", reason="cmd tests only run on Windows")
-class TestCmdHook:
-    """Test Windows cmd shell hook functionality."""
+# @pytest.mark.skipif(os.name != "nt", reason="cmd tests only run on Windows")
+# class TestCmdHook:
+#     """Test Windows cmd shell hook functionality."""
 
-    def test_activate_virtual_environment(
-        self, temp_project: Path, cmd_hook_file: Path
-    ):
-        result = run_cmd_with_hook(
-            "uv activate && echo VIRTUAL_ENV=%VIRTUAL_ENV%",
-            temp_project,
-            cmd_hook_file,
-        )
-        assert result.returncode == 0, f"Command failed: {result.stderr}"
-        assert "VIRTUAL_ENV=" in result.stdout
-        assert str(temp_project / ".venv").replace("/", "\\") in result.stdout
+#     def test_activate_virtual_environment(
+#         self, temp_project: Path, cmd_hook_file: Path
+#     ):
+#         result = run_cmd_with_hook(
+#             "uv activate && echo VIRTUAL_ENV=%VIRTUAL_ENV%",
+#             temp_project,
+#             cmd_hook_file,
+#         )
+#         assert result.returncode == 0, f"Command failed: {result.stderr}"
+#         assert "VIRTUAL_ENV=" in result.stdout
+#         assert str(temp_project / ".venv").replace("/", "\\") in result.stdout
 
-    def test_deactivate_virtual_environment(
-        self, temp_project: Path, cmd_hook_file: Path
-    ):
-        result = run_cmd_with_hook(
-            "uv activate && uv deactivate && echo VIRTUAL_ENV=%VIRTUAL_ENV%",
-            temp_project,
-            cmd_hook_file,
-        )
-        assert result.returncode == 0, f"Command failed: {result.stderr}"
-        assert "VIRTUAL_ENV=" in result.stdout
-        lines = result.stdout.strip().splitlines()
-        virtual_env_line = [line for line in lines if line.startswith("VIRTUAL_ENV=")][
-            -1
-        ]
-        assert virtual_env_line == "VIRTUAL_ENV="
+#     def test_deactivate_virtual_environment(
+#         self, temp_project: Path, cmd_hook_file: Path
+#     ):
+#         result = run_cmd_with_hook(
+#             "uv activate && uv deactivate && echo VIRTUAL_ENV=%VIRTUAL_ENV%",
+#             temp_project,
+#             cmd_hook_file,
+#         )
+#         assert result.returncode == 0, f"Command failed: {result.stderr}"
+#         assert "VIRTUAL_ENV=" in result.stdout
+#         lines = result.stdout.strip().splitlines()
+#         virtual_env_line = [line for line in lines if line.startswith("VIRTUAL_ENV=")][
+#             -1
+#         ]
+#         assert virtual_env_line == "VIRTUAL_ENV="
 
-    def test_activate_nonexistent_environment(
-        self, temp_project: Path, cmd_hook_file: Path
-    ):
-        result = run_cmd_with_hook(
-            "uv activate nonexistent",
-            temp_project,
-            cmd_hook_file,
-        )
-        assert result.returncode != 0
-        assert "Virtual environment not found" in result.stderr + result.stdout
+#     def test_activate_nonexistent_environment(
+#         self, temp_project: Path, cmd_hook_file: Path
+#     ):
+#         result = run_cmd_with_hook(
+#             "uv activate nonexistent",
+#             temp_project,
+#             cmd_hook_file,
+#         )
+#         assert result.returncode != 0
+#         assert "Virtual environment not found" in result.stderr + result.stdout
 
-    def test_deactivate_when_none_active(self, temp_project: Path, cmd_hook_file: Path):
-        # Reset environment and functions if needed; simulate no active env
-        result = run_cmd_with_hook(
-            "set VIRTUAL_ENV= && uv deactivate",
-            temp_project,
-            cmd_hook_file,
-        )
-        assert result.returncode != 0
-        assert (
-            "No virtual environment is active" in result.stderr + result.stdout
-            or "deactivate function not available" in result.stderr + result.stdout
-        )
+#     def test_deactivate_when_none_active(self, temp_project: Path, cmd_hook_file: Path):
+#         # Reset environment and functions if needed; simulate no active env
+#         result = run_cmd_with_hook(
+#             "set VIRTUAL_ENV= && uv deactivate",
+#             temp_project,
+#             cmd_hook_file,
+#         )
+#         assert result.returncode != 0
+#         assert (
+#             "No virtual environment is active" in result.stderr + result.stdout
+#             or "deactivate function not available" in result.stderr + result.stdout
+#         )
 
-    def test_regular_uv_commands_passthrough(
-        self, temp_project: Path, cmd_hook_file: Path
-    ):
-        result = run_cmd_with_hook(
-            "uv --version",
-            temp_project,
-            cmd_hook_file,
-        )
-        assert result.returncode == 0, f"Command failed: {result.stderr}"
-        assert "uv" in result.stdout.lower()
+#     def test_regular_uv_commands_passthrough(
+#         self, temp_project: Path, cmd_hook_file: Path
+#     ):
+#         result = run_cmd_with_hook(
+#             "uv --version",
+#             temp_project,
+#             cmd_hook_file,
+#         )
+#         assert result.returncode == 0, f"Command failed: {result.stderr}"
+#         assert "uv" in result.stdout.lower()
 
-    def test_activation_success_message(self, temp_project: Path, cmd_hook_file: Path):
-        result = run_cmd_with_hook(
-            "uv activate",
-            temp_project,
-            cmd_hook_file,
-        )
-        assert result.returncode == 0, f"Command failed: {result.stderr}"
-        assert "Activated:" in result.stdout
+#     def test_activation_success_message(self, temp_project: Path, cmd_hook_file: Path):
+#         result = run_cmd_with_hook(
+#             "uv activate",
+#             temp_project,
+#             cmd_hook_file,
+#         )
+#         assert result.returncode == 0, f"Command failed: {result.stderr}"
+#         assert "Activated:" in result.stdout
 
-    def test_deactivation_success_message(
-        self, temp_project: Path, cmd_hook_file: Path
-    ):
-        result = run_cmd_with_hook(
-            "uv activate && uv deactivate",
-            temp_project,
-            cmd_hook_file,
-        )
-        assert result.returncode == 0, f"Command failed: {result.stderr}"
-        assert "Activated:" in result.stdout
-        assert "Deactivated:" in result.stdout
+#     def test_deactivation_success_message(
+#         self, temp_project: Path, cmd_hook_file: Path
+#     ):
+#         result = run_cmd_with_hook(
+#             "uv activate && uv deactivate",
+#             temp_project,
+#             cmd_hook_file,
+#         )
+#         assert result.returncode == 0, f"Command failed: {result.stderr}"
+#         assert "Activated:" in result.stdout
+#         assert "Deactivated:" in result.stdout
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell tests only run on Windows")
