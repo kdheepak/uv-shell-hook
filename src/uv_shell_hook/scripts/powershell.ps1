@@ -8,19 +8,23 @@ function uv {
     )
 
     # Logging helper functions
-    function LogInfo([string]$Message) {
+    function LogInfo {
+        param([string]$Message)
         Write-Host "✓ $Message" -ForegroundColor Green
     }
 
-    function LogWarn([string]$Message) {
+    function LogWarn {
+        param([string]$Message)
         Write-Host "Warning: $Message" -ForegroundColor Yellow
     }
 
-    function LogError([string]$Message) {
+    function LogError {
+        param([string]$Message)
         Write-Host "Error: $Message" -ForegroundColor Red
     }
 
-    function LogNote([string]$Message) {
+    function LogNote {
+        param([string]$Message)
         Write-Host $Message -ForegroundColor DarkGray
     }
 
