@@ -104,7 +104,8 @@ Make sure the directory containing `uv.bat` is in your system `PATH`.
 
 ## Usage
 
-Once installed, you can use the enhanced `uv` commands in any supported shell:
+Once installed, you can use normal `uv` commands in addition to `uv activate` and `uv deactivate` in
+any supported shell:
 
 ### Activate a Virtual Environment
 
