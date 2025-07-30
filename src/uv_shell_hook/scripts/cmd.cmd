@@ -2,8 +2,6 @@
 setlocal enabledelayedexpansion
 
 REM --- Main entry point ---
-if "%~1"=="" goto usage
-
 set CMD=%1
 shift
 
@@ -11,15 +9,14 @@ if /I "%CMD%"=="activate" goto activate
 if /I "%CMD%"=="deactivate" goto deactivate
 
 REM Unknown command: pass through to uv executable if exists
+if "%CMD%"=="" goto usage
 uv %CMD% %*
 exit /b 0
-
 
 :usage
 echo Usage: uv activate [path]
 echo        uv deactivate
 exit /b 1
-
 
 :activate
 REM Set input path or current directory
