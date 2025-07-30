@@ -1,0 +1,42 @@
+[project]
+name = "uv-shell-hook"
+dynamic = ["version"]
+description = "This package provides a shell hook for uv allowing activating and deactivating virtual environments."
+readme = "README.md"
+authors = [
+  { name = "Dheepak Krishnamurthy", email = "1813121+kdheepak@users.noreply.github.com" },
+]
+requires-python = ">=3.13"
+dependencies = ["rich>=14.1.0", "typer>=0.16.0"]
+
+[project.scripts]
+uv-shell-hook = "uv_shell_hook.cli:app"
+
+[build-system]
+requires = ["hatchling", "versioningit"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "versioningit"
+
+[tool.versioningit.next-version]
+method = "smallest"
+
+[tool.versioningit.format]
+distance = "{next_version}.dev{distance}+{vcs}{rev}"
+
+dirty = "{base_version}+d{build_date:%Y%m%d}"
+
+distance-dirty = "{next_version}.dev{distance}+{vcs}{rev}.d{build_date:%Y%m%d}"
+
+[tool.versioningit]
+default-version = "0.0.0.dev0"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/uv_shell_hook"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/uv_shell_hook/scripts" = "uv_shell_hook/scripts"
+
+[tool.hatch.build.targets.wheel.shared-data]
+"scripts" = "scripts"

@@ -1,0 +1,203 @@
+# uv-shell-hook
+
+A cross-platform shell integration for [uv](https://github.com/astral-sh/uv) that adds convenient
+`uv activate` and `uv deactivate` commands to manage Python virtual environments across different
+shells and operating systems.
+
+## Features
+
+- **Cross-platform support**: Works on Linux, macOS, and Windows
+- **Multi-shell support**: bash, zsh, Fish, PowerShell, and Windows CMD
+- **Smart virtual environment discovery**: Automatically finds virtual environments in multiple
+  locations
+- **Consistent interface**: Same `uv activate` and `uv deactivate` commands across all shells
+- **Colorized output**: Clear visual feedback with colored status messages
+
+## Installation
+
+```bash
+pip install uv-shell-hook
+```
+
+## Quick Start
+
+Choose your shell and follow the setup instructions below:
+
+### Bash
+
+Add the uv function to your shell:
+
+```bash
+# Add to ~/.bashrc or ~/.bash_profile
+eval "$(uv-shell-hook bash)"
+```
+
+Or manually add the function:
+
+```bash
+uv-shell-hook bash >> ~/.bashrc
+source ~/.bashrc
+```
+
+### Zsh
+
+Add the uv function to your shell:
+
+```zsh
+# Add to ~/.zshrc
+eval "$(uv-shell-hook zsh)"
+```
+
+Or manually add the function:
+
+```zsh
+uv-shell-hook zsh >> ~/.zshrc
+source ~/.zshrc
+```
+
+### Fish
+
+Add the uv function to your shell:
+
+```fish
+# Add to ~/.config/fish/config.fish
+uv-shell-hook fish | source
+```
+
+Or manually add the function:
+
+```fish
+uv-shell-hook fish >> ~/.config/fish/config.fish
+```
+
+### PowerShell
+
+Add the uv function to your PowerShell profile:
+
+```powershell
+# Add to your PowerShell profile (run $PROFILE to see location)
+uv-shell-hook powershell | Out-String | Invoke-Expression
+```
+
+Or save it permanently:
+
+```powershell
+uv-shell-hook powershell | Add-Content $PROFILE
+```
+
+### Windows CMD
+
+Save the batch script and add it to your PATH:
+
+```cmd
+# Save the batch script
+uv-shell-hook cmd > uv.bat
+
+# Move to a directory in your PATH (e.g., C:\Windows\System32 or create a local bin directory)
+move uv.bat C:\Users\%USERNAME%\bin\
+```
+
+Make sure the directory containing `uv.bat` is in your system PATH.
+
+## Usage
+
+Once installed, you can use the enhanced `uv` commands in any supported shell:
+
+### Activate a Virtual Environment
+
+The `uv activate` command will search for virtual environments in the following locations (in
+order):
+
+1. `<path>/.venv` - Local .venv directory
+2. `<path>` itself (if it ends with `.venv`)
+3. `~/.virtualenvs/<name>/.venv` - Named environment in virtualenvs directory
+4. `~/.virtualenvs/<name>` - Named environment directory (uses $WORKON_HOME if set)
+
+```bash
+# Activate virtual environment in current directory
+uv activate
+
+# Activate virtual environment in specific path
+uv activate ./my-project
+
+# Activate virtual environment by name from ~/.virtualenvs/
+uv activate myproject
+
+# Activate specific .venv path
+uv activate /path/to/project/.venv
+```
+
+### Deactivate Virtual Environment
+
+```bash
+# Deactivate currently active virtual environment
+uv deactivate
+```
+
+### Other uv Commands
+
+All other `uv` commands work exactly as before:
+
+```bash
+uv init
+uv add requests
+uv run python script.py
+uv sync
+# ... any other uv command
+```
+
+## Examples
+
+### Example 1: Project-local Virtual Environment
+
+```bash
+cd my-python-project
+uv venv                    # Create .venv in current directory
+uv activate                # Activate the .venv
+# (my-python-project) $
+uv add requests           # Install packages
+uv deactivate             # Deactivate when done
+```
+
+### Example 2: Named Virtual Environment
+
+```bash
+# Create a named environment
+uv venv ~/.virtualenvs/data-analysis
+
+# Activate from anywhere
+cd /some/other/directory
+uv activate data-analysis  # Activates ~/.virtualenvs/data-analysis/.venv
+```
+
+### Example 3: Multiple Virtual Environments
+
+```bash
+# Work with different projects
+uv activate web-app        # Activate ~/.virtualenvs/web-app/.venv
+uv deactivate
+
+uv activate data-science   # Activate ~/.virtualenvs/data-science/.venv
+uv deactivate
+
+uv activate ./local-project  # Activate ./local-project/.venv
+```
+
+## Troubleshooting
+
+### Virtual Environment Not Found
+
+If you get "Virtual environment directory not found", check:
+
+1. The virtual environment exists in one of the search locations
+2. You have the correct permissions to access the directory
+3. The activation script exists in the `Scripts/` (Windows) or `bin/` (Unix) subdirectory
+
+### Function Not Available
+
+Make sure you've properly added the shell function to your profile and restarted your shell or
+sourced the profile file.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
