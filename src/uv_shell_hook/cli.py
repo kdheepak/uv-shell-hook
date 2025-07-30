@@ -116,9 +116,6 @@ def install_instructions(
     shell: Optional[str] = typer.Option(
         None, "--shell", "-s", help="Target shell (auto-detected if not specified)"
     ),
-    dry_run: bool = typer.Option(
-        False, "--dry-run", help="Show what would be done without making changes"
-    ),
 ):
     """Install the uv shell hook for your shell."""
     if not shell:
@@ -134,10 +131,9 @@ def install_instructions(
         Panel(instructions, title=f"Installation for {shell}", border_style="blue")
     )
 
-    if not dry_run:
-        console.print(
-            "\n[yellow]Note:[/] You'll need to restart your shell or source your config file for changes to take effect."
-        )
+    console.print(
+        "\n[yellow]Note:[/] You'll need to restart your shell or source your config file for changes to take effect."
+    )
 
 
 @app.command()
