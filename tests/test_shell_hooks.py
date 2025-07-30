@@ -127,13 +127,13 @@ def run_fish_with_hook(
     # Run fish with clean environment to avoid config issues
     env = os.environ.copy()
     env["HOME"] = str(cwd)  # Use temp directory as HOME to avoid config conflicts
-    
+
     return subprocess.run(
-        ["fish", "--no-config", "-c", full_command], 
-        cwd=cwd, 
-        capture_output=True, 
+        ["fish", "--no-config", "-c", full_command],
+        cwd=cwd,
+        capture_output=True,
         text=True,
-        env=env
+        env=env,
     )
 
 
@@ -144,10 +144,17 @@ def run_powershell_with_hook(
     full_command = f". {hook_file}; {command}"
 
     return subprocess.run(
-        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", full_command],
+        [
+            "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            full_command,
+        ],
         cwd=cwd,
         capture_output=True,
-        text=True
+        text=True,
     )
 
 
@@ -344,7 +351,7 @@ class TestFishHook:
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell tests only run on Windows")
 class TestPowershellHook:
     """Test PowerShell shell hook functionality."""
-    
+
     def test_activate_virtual_environment(
         self, temp_project: Path, powershell_hook_file: Path
     ):
@@ -354,11 +361,11 @@ class TestPowershellHook:
             temp_project,
             powershell_hook_file,
         )
-        
+
         assert result.returncode == 0, f"Command failed: {result.stderr}"
         assert "VIRTUAL_ENV=" in result.stdout
-        assert str(temp_project / ".venv") in result.stdout.replace('\\', '/')
-    
+        assert str(temp_project / ".venv") in result.stdout.replace("\\", "/")
+
     def test_deactivate_virtual_environment(
         self, temp_project: Path, powershell_hook_file: Path
     ):
@@ -368,11 +375,11 @@ class TestPowershellHook:
             temp_project,
             powershell_hook_file,
         )
-        
+
         assert result.returncode == 0, f"Command failed: {result.stderr}"
         assert "Activated:" in result.stdout
         assert "Deactivated:" in result.stdout
-    
+
     def test_activate_nonexistent_environment(
         self, temp_project: Path, powershell_hook_file: Path
     ):
@@ -382,10 +389,10 @@ class TestPowershellHook:
             temp_project,
             powershell_hook_file,
         )
-        
+
         assert result.returncode != 0
         assert "Virtual environment not found" in result.stdout
-    
+
     def test_deactivate_when_none_active(
         self, temp_project: Path, powershell_hook_file: Path
     ):
@@ -395,10 +402,10 @@ class TestPowershellHook:
             temp_project,
             powershell_hook_file,
         )
-        
+
         assert result.returncode != 0
         assert "No virtual environment is active" in result.stdout
-    
+
     def test_regular_uv_commands_passthrough(
         self, temp_project: Path, powershell_hook_file: Path
     ):
@@ -408,10 +415,10 @@ class TestPowershellHook:
             temp_project,
             powershell_hook_file,
         )
-        
+
         assert result.returncode == 0, f"Command failed: {result.stderr}"
         assert "uv" in result.stdout.lower()
-    
+
     def test_activation_success_message(
         self, temp_project: Path, powershell_hook_file: Path
     ):
@@ -421,10 +428,10 @@ class TestPowershellHook:
             temp_project,
             powershell_hook_file,
         )
-        
+
         assert result.returncode == 0, f"Command failed: {result.stderr}"
         assert "Activated:" in result.stdout
-    
+
     def test_deactivation_success_message(
         self, temp_project: Path, powershell_hook_file: Path
     ):
@@ -434,7 +441,7 @@ class TestPowershellHook:
             temp_project,
             powershell_hook_file,
         )
-        
+
         assert result.returncode == 0, f"Command failed: {result.stderr}"
         assert "Activated:" in result.stdout
         assert "Deactivated:" in result.stdout
