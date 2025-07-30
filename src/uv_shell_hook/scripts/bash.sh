@@ -13,7 +13,7 @@ uv() {
         activate)
             local input_path="${2:-.}"
             local venv_path=""
-            local virtualenvs_folder="$HOME/.virtualenvs"
+            local virtualenvs_folder="${WORKON_HOME:-$HOME/.virtualenvs}"
             
             # Normalize input path
             input_path="${input_path%/}" # Remove trailing slash
