@@ -289,7 +289,16 @@ jobs:
         run: |
           uv run python -m twine check dist/*
           # Check wheel contents
-          uv run python -c "import zipfile; z = zipfile.ZipFile('dist/'*.whl); print('\\n'.join(z.namelist()[:20]))"
+          uv run python -c "
+          import zipfile, glob
+          for wheel in glob.glob('dist/*.whl'):
+              print(f'Contents of {wheel}:')
+              z = zipfile.ZipFile(wheel)
+              print('\\n'.join(z.namelist()[:20]))
+              if len(z.namelist()) > 20:
+                  print(f'... and {len(z.namelist()) - 20} more files')
+              print()
+          "
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4
