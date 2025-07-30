@@ -83,12 +83,12 @@ def get_installation_instructions(shell: str) -> str:
     """Get installation instructions for the given shell."""
     instructions = {
         "bash": """# Add to ~/.bashrc or ~/.bash_profile:
-source <(uv-shell-hook bash)
+eval "$(uv-shell-hook bash)"
 
 # Or manually:
 uv-shell-hook bash >> ~/.bashrc""",
         "zsh": """# Add to ~/.zshrc:
-source <(uv-shell-hook zsh)
+eval "$(uv-shell-hook zsh)"
 
 # Or manually:
 uv-shell-hook zsh >> ~/.zshrc""",
@@ -98,7 +98,7 @@ uv-shell-hook fish | source
 # Or manually:
 uv-shell-hook fish >> ~/.config/fish/config.fish""",
         "powershell": """# Add to your PowerShell profile:
-uv-shell-hook powershell | Invoke-Expression
+uv-shell-hook powershell | Out-String | Invoke-Expression
 
 # Or manually add to $PROFILE:
 uv-shell-hook powershell >> $PROFILE""",
