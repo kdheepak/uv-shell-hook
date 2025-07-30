@@ -109,12 +109,16 @@ any supported shell:
 
 ### Activate a Virtual Environment
 
-The `uv activate` command will search for virtual environments in the following locations (in
+The `uv activate <path>` command will search for virtual environments in the following locations (in
 order):
 
-1. `<path>/.venv` - Local .venv directory
-2. `<path>` itself (if it ends with `.venv`)
-3. `~/.virtualenvs/<name>` - Named environment directory
+1. `<path>/.venv`
+2. `<path>`
+3. `~/.virtualenvs/<path>`
+
+If `<path>` is not specified, it defaults to the current directory.
+
+Examples:
 
 ```bash
 # Activate virtual environment in current directory
