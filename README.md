@@ -25,7 +25,7 @@ Choose your shell and follow the setup instructions below:
 
 ### Bash
 
-Add the uv function to your shell:
+Add the `uv` function to your shell:
 
 ```bash
 # Add to ~/.bashrc or ~/.bash_profile
@@ -41,7 +41,7 @@ source ~/.bashrc
 
 ### Zsh
 
-Add the uv function to your shell:
+Add the `uv` function to your shell:
 
 ```zsh
 # Add to ~/.zshrc
@@ -57,7 +57,7 @@ source ~/.zshrc
 
 ### Fish
 
-Add the uv function to your shell:
+Add the `uv` function to your shell:
 
 ```fish
 # Add to ~/.config/fish/config.fish
@@ -72,7 +72,7 @@ uv-shell-hook fish >> ~/.config/fish/config.fish
 
 ### PowerShell
 
-Add the uv function to your PowerShell profile:
+Add the `uv` function to your PowerShell profile:
 
 ```powershell
 # Add to your PowerShell profile (run $PROFILE to see location)
@@ -87,17 +87,17 @@ uv-shell-hook powershell | Add-Content $PROFILE
 
 ### Windows CMD
 
-Save the batch script and add it to your PATH:
+Save the batch script and add it to your `PATH`:
 
 ```cmd
 # Save the batch script
 uv-shell-hook cmd > uv.bat
 
-# Move to a directory in your PATH (e.g., C:\Windows\System32 or create a local bin directory)
+# Move to a directory in your `PATH` (e.g., C:\Windows\System32 or create a local bin directory)
 move uv.bat C:\Users\%USERNAME%\bin\
 ```
 
-Make sure the directory containing `uv.bat` is in your system PATH.
+Make sure the directory containing `uv.bat` is in your system `PATH`.
 
 ## Usage
 
@@ -134,7 +134,7 @@ uv activate /path/to/project/.venv
 uv deactivate
 ```
 
-### Other uv Commands
+### Other `uv` Commands
 
 All other `uv` commands work exactly as before:
 
@@ -143,7 +143,7 @@ uv init
 uv add requests
 uv run python script.py
 uv sync
-# ... any other uv command
+# ... any other `uv` command
 ```
 
 ## Examples
@@ -185,18 +185,20 @@ uv activate ./local-project  # Activate ./local-project/.venv
 
 ## Troubleshooting
 
-### Virtual Environment Not Found
+If you encounter issues, try the following:
 
-If you get "Virtual environment directory not found", check:
-
-1. The virtual environment exists in one of the search locations
-2. You have the correct permissions to access the directory
-3. The activation script exists in the `Scripts/` (Windows) or `bin/` (Unix) subdirectory
-
-### Function Not Available
-
-Make sure you've properly added the shell function to your profile and restarted your shell or
-sourced the profile file.
+- Ensure the shell configuration file is sourced correctly (e.g., `source ~/.bashrc` or
+  `source ~/.zshrc`).
+- Check that the `uv-shell-hook` command is available in your `PATH`.
+- Verify that the virtual environment exists in the expected location.
+- If using Fish, ensure you have the latest version of Fish shell that supports the syntax used.
+- For PowerShell, ensure your execution policy allows running scripts
+  (`Set-ExecutionPolicy RemoteSigned`).
+- If you have issues with CMD, ensure the `uv.bat` file is in a directory included in your system
+  `PATH`.
+- Check the `uv` documentation for any updates or changes to command usage.
+- If you have custom virtual environment locations, ensure they are correctly set in your shell
+  configuration.
 
 ## Contributing
 
