@@ -30,16 +30,17 @@ function uv {
 
             if ($VenvPath) {
                 & (Join-Path $VenvPath 'Scripts\activate.ps1')
-                Write-Host "✓ Activated: $VenvPath" -ForegroundColor Green
+                Write-Host "Activated: $VenvPath" -ForegroundColor Green
             } else {
                 Write-Host "Virtual environment not found: $Path" -ForegroundColor Red
+                exit 1
             }
         }
 
         'deactivate' {
             if ($env:VIRTUAL_ENV -and (Get-Command deactivate -ErrorAction SilentlyContinue)) {
                 deactivate
-                Write-Host "✓ Deactivated" -ForegroundColor Green
+                Write-Host "Deactivated" -ForegroundColor Green
             } else {
                 Write-Host "No virtual environment is active" -ForegroundColor Yellow
             }
