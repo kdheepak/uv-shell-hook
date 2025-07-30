@@ -7,127 +7,45 @@ function uv {
         [string[]]$Args
     )
 
-    # Logging helper functions
-    function LogInfo {
-        param([string]$Message)
-        Write-Host "✓ $Message" -ForegroundColor Green
-    }
-
-    function LogWarn {
-        param([string]$Message)
-        Write-Host "Warning: $Message" -ForegroundColor Yellow
-    }
-
-    function LogError {
-        param([string]$Message)
-        Write-Host "Error: $Message" -ForegroundColor Red
-    }
-
-    function LogNote {
-        param([string]$Message)
-        Write-Host $Message -ForegroundColor DarkGray
-    }
-
-    if (-not $Command) {
-        Write-Host 'Usage: uv {activate|deactivate|...}' -ForegroundColor White
-        return
-    }
-
     switch ($Command) {
         'activate' {
-            $InputPath = if ($Args.Count -gt 0) { $Args[0] } else { '.' }
-            $VenvPath = ''
-            $ActivateScript = ''
+            $Path = if ($Args) { $Args[0] } else { '.venv' }
 
-            # Determine virtualenv folder
-            $VirtualenvsFolder = $env:WORKON_HOME
-            if (-not $VirtualenvsFolder) {
-                if ($env:USERPROFILE) {
-                    $VirtualenvsFolder = Join-Path $env:USERPROFILE '.virtualenvs'
-                } elseif ($env:HOME) {
-                    $VirtualenvsFolder = Join-Path $env:HOME '.virtualenvs'
-                } else {
-                    LogError 'Neither WORKON_HOME, USERPROFILE, nor HOME is set'
-                    return
-                }
-            }
-
-            # Normalize input path
-            $InputPath = $InputPath.TrimEnd('\', '/')
-
-            if ($InputPath -eq '.') {
-                $InputPath = Get-Location
-            } elseif (-not [System.IO.Path]::IsPathRooted($InputPath)) {
-                $InputPath = Join-Path (Get-Location) $InputPath
-            }
-
-            $PossiblePaths = @(
-                (Join-Path $InputPath '.venv'),
-                $InputPath,
-                (Join-Path $VirtualenvsFolder $InputPath),
-                (Join-Path $VirtualenvsFolder (Split-Path $InputPath -Leaf))
+            # Check common venv locations
+            $VenvPath = $null
+            $Locations = @(
+                (Join-Path (Get-Location) $Path),
+                (Join-Path (Get-Location) '.venv'),
+                (Join-Path ($env:WORKON_HOME ?? "$env:USERPROFILE\.virtualenvs") $Path)
             )
 
-            foreach ($Path in $PossiblePaths) {
-                if (Test-Path $Path -PathType Container) {
-                    if (Test-Path (Join-Path $Path 'Scripts\activate.ps1')) {
-                        $VenvPath = $Path
-                        $ActivateScript = Join-Path $Path 'Scripts\activate.ps1'
-                        break
-                    } elseif (Test-Path (Join-Path $Path 'bin\activate')) {
-                        $VenvPath = $Path
-                        $ActivateScript = Join-Path $Path 'Scripts\activate.ps1'
-                        if (-not (Test-Path $ActivateScript)) {
-                            LogError 'PowerShell activation script not found. This venv may not be compatible with PowerShell.'
-                            return
-                        }
-                        break
-                    }
+            foreach ($Loc in $Locations) {
+                $ActivateScript = Join-Path $Loc 'Scripts\activate.ps1'
+                if (Test-Path $ActivateScript) {
+                    $VenvPath = $Loc
+                    break
                 }
             }
 
-            if (-not $VenvPath -or -not (Test-Path $VenvPath)) {
-                LogError 'Virtual environment not found'
-                LogNote "Searched for: $InputPath"
-                LogNote 'Locations checked:'
-                Write-Host "  - $(Join-Path $VirtualenvsFolder "$InputPath\.venv")" -ForegroundColor Cyan
-                Write-Host "  - $(Join-Path $VirtualenvsFolder $InputPath)" -ForegroundColor Cyan
-                Write-Host "  - $(Join-Path $InputPath '.venv')" -ForegroundColor Cyan
-                Write-Host "  - $InputPath" -ForegroundColor Cyan
-                LogNote 'You can create a virtual environment using:'
-                Write-Host '  uv venv <name-of-env>' -ForegroundColor Cyan
-                return
-            }
-
-            if (Test-Path $ActivateScript) {
-                & $ActivateScript
-                LogInfo "Activated: $VenvPath"
+            if ($VenvPath) {
+                & (Join-Path $VenvPath 'Scripts\activate.ps1')
+                Write-Host "✓ Activated: $VenvPath" -ForegroundColor Green
             } else {
-                LogError "Activation script not found: $ActivateScript"
+                Write-Host "Virtual environment not found: $Path" -ForegroundColor Red
             }
         }
 
         'deactivate' {
-            $OldVenv = $env:VIRTUAL_ENV
-            if (-not $OldVenv) {
-                LogWarn 'No virtual environment is active'
-                return
-            }
-
-            if (Get-Command deactivate -ErrorAction SilentlyContinue) {
+            if ($env:VIRTUAL_ENV -and (Get-Command deactivate -ErrorAction SilentlyContinue)) {
                 deactivate
-                LogInfo "Deactivated: $OldVenv"
+                Write-Host "✓ Deactivated" -ForegroundColor Green
             } else {
-                LogError 'deactivate function not available'
+                Write-Host "No virtual environment is active" -ForegroundColor Yellow
             }
         }
 
         default {
-            if ($Args.Count -gt 0) {
-                & uv.exe $Command @Args
-            } else {
-                & uv.exe $Command
-            }
+            & uv.exe $Command @Args
         }
     }
 }
