@@ -94,7 +94,7 @@ function uv {
                 Write-Host "  - " -NoNewline -ForegroundColor DarkGray
                 Write-Host $InputPath -ForegroundColor Cyan
                 Note "You can create a virtual environment using:"
-                Write-Host "uv venv <name-of-env>" -ForegroundColor Cyan
+                Write-Host 'uv venv <name-of-env>' -ForegroundColor Cyan
                 return
             }
 
