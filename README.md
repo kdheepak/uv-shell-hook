@@ -113,8 +113,7 @@ order):
 
 1. `<path>/.venv` - Local .venv directory
 2. `<path>` itself (if it ends with `.venv`)
-3. `~/.virtualenvs/<name>/.venv` - Named environment in virtualenvs directory
-4. `~/.virtualenvs/<name>` - Named environment directory (uses $WORKON_HOME if set)
+3. `~/.virtualenvs/<name>` - Named environment directory
 
 ```bash
 # Activate virtual environment in current directory
