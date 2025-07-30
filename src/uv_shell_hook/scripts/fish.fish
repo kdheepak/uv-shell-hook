@@ -1,100 +1,111 @@
-function uv --wraps=uv --description 'Enhanced uv with virtual environment activation'
-    # Color definitions
-    set -l RED '\033[0;31m'
-    set -l GREEN '\033[0;32m'
-    set -l YELLOW '\033[0;33m'
-    set -l BLUE '\033[0;34m'
-    set -l CYAN '\033[0;36m'
-    set -l BOLD '\033[1m'
-    set -l DIM '\033[2m'
-    set -l NOCOLOR '\033[0m'
+function uv
+    # Logging helpers using Fish's set_color
+    function info
+        echo (set_color green --bold)"✓"(set_color normal) (set_color green)"$argv"(set_color normal)
+    end
 
-    if test (count $argv) -eq 0
-        command uv
-        return
+    function warn
+        echo (set_color yellow --bold)"Warning:"(set_color normal) (set_color yellow)"$argv"(set_color normal) >&2
+    end
+
+    function error
+        echo (set_color red --bold)"Error:"(set_color normal) (set_color red)"$argv"(set_color normal) >&2
+    end
+
+    function note
+        echo (set_color --dim)"$argv"(set_color normal) >&2
+    end
+
+    if test -z "$argv[1]"
+        echo (set_color --bold)"Usage:"(set_color normal)" uv {activate|deactivate|...}" >&2
+        return 1
     end
 
     switch $argv[1]
         case activate
-            set -l input_path "."
-            if test (count $argv) -gt 1
-                set input_path $argv[2]
+            set -l input_path $argv[2]
+            if test -z "$input_path"
+                set input_path "."
             end
 
-            # Remove trailing slash
-            set input_path (string trim -c '/' $input_path)
-
-            set -l workon_home "$WORKON_HOME"
-            if test -z "$workon_home"
-                set workon_home "$HOME/.virtualenvs"
-            end
-
-            # Search for virtual environment
             set -l venv_path ""
-            set -l search_paths "$input_path/.venv" "$input_path" "$workon_home/$input_path"
+            set -l virtualenvs_folder $WORKON_HOME
+            if test -z "$virtualenvs_folder"
+                set virtualenvs_folder "$HOME/.virtualenvs"
+            end
+            set -l activate_script ""
+            set -l is_windows false
 
-            for path in $search_paths
-                if test -d "$path" -a \( -f "$path/bin/activate" -o -f "$path/Scripts/activate" \)
-                    set venv_path "$path"
-                    break
-                end
+            # Normalize input path - remove trailing slash
+            set input_path (string trim --right --chars=/ "$input_path")
+
+            # Check for Windows environment
+            if test -n "$WINDIR"; or string match -q "msys*" $OSTYPE; or string match -q "cygwin*" $OSTYPE
+                set is_windows true
             end
 
-            # Check if virtual environment exists
-            if test -z "$venv_path" -o ! -d "$venv_path"
-                echo -e "$RED$BOLD"Error:"$NOCOLOR $RED"Virtual environment not found"$NOCOLOR" >&2
-                echo -e "$DIM"Searched for:"$NOCOLOR $YELLOW$input_path$NOCOLOR" >&2
-                echo -e "$DIM"Locations checked:"$NOCOLOR" >&2
-                for path in $search_paths
-                    echo "  • $path" >&2
-                end
-                return 1
-            end
-
-            # Determine activation script location based on platform
-            set -l activate_script
-            if test -n "$WINDIR" -o (uname -s | string match -q "*MSYS*") -o (uname -s | string match -q "*CYGWIN*")
+            # Virtual environment detection
+            if test -f "$input_path/.venv/Scripts/activate.fish"
+                set venv_path "$input_path/.venv"
                 set activate_script "$venv_path/Scripts/activate.fish"
-            else
+            else if test -f "$input_path/.venv/bin/activate.fish"
+                set venv_path "$input_path/.venv"
+                set activate_script "$venv_path/bin/activate.fish"
+            else if test -f "$input_path/Scripts/activate.fish"
+                set venv_path "$input_path"
+                set activate_script "$venv_path/Scripts/activate.fish"
+            else if test -f "$input_path/bin/activate.fish"
+                set venv_path "$input_path"
+                set activate_script "$venv_path/bin/activate.fish"
+            else if test -f "$virtualenvs_folder/$input_path/Scripts/activate.fish"
+                set venv_path "$virtualenvs_folder/$input_path"
+                set activate_script "$venv_path/Scripts/activate.fish"
+            else if test -f "$virtualenvs_folder/$input_path/bin/activate.fish"
+                set venv_path "$virtualenvs_folder/$input_path"
                 set activate_script "$venv_path/bin/activate.fish"
             end
 
-            # Source the activation script
+            # Handle missing venv
+            if test -z "$venv_path"; or not test -d "$venv_path"
+                error "Virtual environment not found"
+                note "Searched for: "(set_color yellow)"$input_path"(set_color normal)
+                note "Locations checked:"
+                echo "  - "(set_color cyan)"$virtualenvs_folder/$input_path/.venv"(set_color normal) >&2
+                echo "  - "(set_color cyan)"$virtualenvs_folder/$input_path"(set_color normal) >&2
+                echo "  - "(set_color cyan)"$input_path/.venv"(set_color normal) >&2
+                echo "  - "(set_color cyan)"$input_path"(set_color normal) >&2
+                note "You can create a virtual environment using:"
+                echo (set_color cyan)"uv venv <name-of-env>"(set_color normal) >&2
+                return 1
+            end
+
+            # Activate the environment
             if test -f "$activate_script"
                 source "$activate_script"
-                echo -e "$GREEN$BOLD"✓"$NOCOLOR $GREEN"Activated:"$NOCOLOR $CYAN$venv_path$NOCOLOR"
-
-                # Show Python version for confirmation
-                if command -v python >/dev/null 2>&1
-                    set -l py_version (python --version 2>&1 | string split ' ')[2]
-                    echo -e "$DIM"  Python $py_version"$NOCOLOR"
-                end
+                info "Activated: "(set_color cyan)"$venv_path"(set_color normal)
             else
-                echo -e "$RED$BOLD"Error:"$NOCOLOR $RED"Activation script not found: $YELLOW$activate_script$NOCOLOR" >&2
+                error "Activation script not found: "(set_color yellow)"$activate_script"(set_color normal)
                 return 1
             end
 
         case deactivate
-            # Check if we're in a virtual environment
-            if test -z "$VIRTUAL_ENV"
-                echo -e "$YELLOW$BOLD"Warning:"$NOCOLOR $YELLOW"No virtual environment is active"$NOCOLOR" >&2
+            set -l old_venv $VIRTUAL_ENV
+
+            if test -z "$old_venv"
+                warn "No virtual environment is active"
                 return 1
             end
 
-            # Store the old venv path
-            set -l old_venv "$VIRTUAL_ENV"
-
-            # Call the deactivate function if it exists
             if functions -q deactivate
                 deactivate
-                echo -e "$YELLOW$BOLD"✗"$NOCOLOR $YELLOW"Deactivated:"$NOCOLOR $CYAN$old_venv$NOCOLOR"
+                info "Deactivated: "(set_color cyan)"$old_venv"(set_color normal)
             else
-                echo -e "$RED$BOLD"Error:"$NOCOLOR $RED"deactivate function not available"$NOCOLOR" >&2
+                error "deactivate function not available"
                 return 1
             end
 
         case '*'
-            # For all other commands, run the actual uv executable
+            # Pass all other commands to the actual uv executable
             command uv $argv
     end
 end
