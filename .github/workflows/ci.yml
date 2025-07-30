@@ -40,13 +40,13 @@ jobs:
         run: uv sync --locked --all-extras --dev
 
       - name: Run ruff linting
-        run: uvx ruff check --output-format=github
+        run: uv run ruff check --output-format=github
 
       - name: Run ruff formatting check
-        run: uvx ruff format --check
+        run: uv run ruff format --check
 
       - name: Run type checking
-        run: uvx mypy .
+        run: uv run mypy .
 
   test-linux:
     name: Test on Linux - Python ${{ matrix.python-version }}

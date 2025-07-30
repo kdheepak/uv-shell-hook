@@ -30,7 +30,12 @@ dirty = "{base_version}+d{build_date:%Y%m%d}"
 distance-dirty = "{next_version}.dev{distance}+{vcs}{rev}.d{build_date:%Y%m%d}"
 
 [dependency-groups]
-dev = ["pytest>=8.4.1"]
+dev = [
+    "mypy>=1.17.0",
+    "pytest>=8.4.1",
+    "ruff>=0.12.7",
+    "types-setuptools>=80.9.0.20250529",
+]
 
 [tool.versioningit]
 default-version = "0.0.0.dev0"
