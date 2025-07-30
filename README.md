@@ -123,8 +123,9 @@ uv activate
 # Activate virtual environment in specific path
 uv activate ./my-project
 
-# Activate virtual environment by name from ~/.virtualenvs/
-uv activate myproject
+# Activate virtual environment by name from ~/.virtualenvs/my-project
+# i.e. mimic `workon myproject` from virtualenvwrapper or `conda activate myproject` from conda
+uv activate my-project
 
 # Activate specific .venv path
 uv activate /path/to/project/.venv
