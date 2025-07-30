@@ -120,7 +120,7 @@ function uv {
                 deactivate
                 Info "Deactivated: $OldVenv"
             } else {
-                Error "deactivate function not available"
+                Error 'deactivate function not available'
             }
         }
 
