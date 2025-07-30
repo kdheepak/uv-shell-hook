@@ -79,6 +79,23 @@ def fish_hook_file(project_root: Path):
     hook_file.unlink()
 
 
+@pytest.fixture
+def powershell_hook_file(project_root: Path):
+    """Create a temporary file with the PowerShell hook sourced."""
+    # Get the PowerShell hook content directly from the script file
+    script_path = project_root / "src" / "uv_shell_hook" / "scripts" / "powershell.ps1"
+    script_content = script_path.read_text()
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ps1", delete=False) as f:
+        f.write(script_content)
+        hook_file = Path(f.name)
+
+    yield hook_file
+
+    # Cleanup
+    hook_file.unlink()
+
+
 def run_bash_with_hook(
     command: str, cwd: Path, hook_file: Path
 ) -> subprocess.CompletedProcess:
@@ -117,6 +134,20 @@ def run_fish_with_hook(
         capture_output=True, 
         text=True,
         env=env
+    )
+
+
+def run_powershell_with_hook(
+    command: str, cwd: Path, hook_file: Path
+) -> subprocess.CompletedProcess:
+    """Run a PowerShell command with the shell hook sourced from file."""
+    full_command = f". {hook_file}; {command}"
+
+    return subprocess.run(
+        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", full_command],
+        cwd=cwd,
+        capture_output=True,
+        text=True
     )
 
 
@@ -308,3 +339,102 @@ class TestFishHook:
 
         assert result.returncode == 0, f"Command failed: {result.stderr}"
         assert "uv" in result.stdout.lower()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell tests only run on Windows")
+class TestPowershellHook:
+    """Test PowerShell shell hook functionality."""
+    
+    def test_activate_virtual_environment(
+        self, temp_project: Path, powershell_hook_file: Path
+    ):
+        """Test activating a virtual environment."""
+        result = run_powershell_with_hook(
+            "uv activate; Write-Output 'VIRTUAL_ENV='$env:VIRTUAL_ENV",
+            temp_project,
+            powershell_hook_file,
+        )
+        
+        assert result.returncode == 0, f"Command failed: {result.stderr}"
+        assert "VIRTUAL_ENV=" in result.stdout
+        assert str(temp_project / ".venv") in result.stdout.replace('\\', '/')
+    
+    def test_deactivate_virtual_environment(
+        self, temp_project: Path, powershell_hook_file: Path
+    ):
+        """Test deactivating a virtual environment."""
+        result = run_powershell_with_hook(
+            "uv activate; uv deactivate",
+            temp_project,
+            powershell_hook_file,
+        )
+        
+        assert result.returncode == 0, f"Command failed: {result.stderr}"
+        assert "Activated:" in result.stdout
+        assert "Deactivated:" in result.stdout
+    
+    def test_activate_nonexistent_environment(
+        self, temp_project: Path, powershell_hook_file: Path
+    ):
+        """Test that activating a non-existent environment fails."""
+        result = run_powershell_with_hook(
+            "uv activate nonexistent",
+            temp_project,
+            powershell_hook_file,
+        )
+        
+        assert result.returncode != 0
+        assert "Virtual environment not found" in result.stdout
+    
+    def test_deactivate_when_none_active(
+        self, temp_project: Path, powershell_hook_file: Path
+    ):
+        """Test that deactivating when no environment is active fails gracefully."""
+        result = run_powershell_with_hook(
+            "uv deactivate",
+            temp_project,
+            powershell_hook_file,
+        )
+        
+        assert result.returncode != 0
+        assert "No virtual environment is active" in result.stdout
+    
+    def test_regular_uv_commands_passthrough(
+        self, temp_project: Path, powershell_hook_file: Path
+    ):
+        """Test that regular uv commands still work."""
+        result = run_powershell_with_hook(
+            "uv --version",
+            temp_project,
+            powershell_hook_file,
+        )
+        
+        assert result.returncode == 0, f"Command failed: {result.stderr}"
+        assert "uv" in result.stdout.lower()
+    
+    def test_activation_success_message(
+        self, temp_project: Path, powershell_hook_file: Path
+    ):
+        """Test that activation shows success message."""
+        result = run_powershell_with_hook(
+            "uv activate",
+            temp_project,
+            powershell_hook_file,
+        )
+        
+        assert result.returncode == 0, f"Command failed: {result.stderr}"
+        assert "Activated:" in result.stdout
+    
+    def test_deactivation_success_message(
+        self, temp_project: Path, powershell_hook_file: Path
+    ):
+        """Test that deactivation shows success message."""
+        result = run_powershell_with_hook(
+            "uv activate; uv deactivate",
+            temp_project,
+            powershell_hook_file,
+        )
+        
+        assert result.returncode == 0, f"Command failed: {result.stderr}"
+        assert "Activated:" in result.stdout
+        assert "Deactivated:" in result.stdout
