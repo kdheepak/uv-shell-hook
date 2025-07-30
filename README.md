@@ -149,43 +149,6 @@ uv sync
 # ... any other `uv` command
 ```
 
-## Examples
-
-### Example 1: Project-local Virtual Environment
-
-```bash
-cd my-python-project
-uv venv                    # Create .venv in current directory
-uv activate                # Activate the .venv
-# (my-python-project) $
-uv add requests           # Install packages
-uv deactivate             # Deactivate when done
-```
-
-### Example 2: Named Virtual Environment
-
-```bash
-# Create a named environment
-uv venv ~/.virtualenvs/data-analysis
-
-# Activate from anywhere
-cd /some/other/directory
-uv activate data-analysis  # Activates ~/.virtualenvs/data-analysis/.venv
-```
-
-### Example 3: Multiple Virtual Environments
-
-```bash
-# Work with different projects
-uv activate web-app        # Activate ~/.virtualenvs/web-app/.venv
-uv deactivate
-
-uv activate data-science   # Activate ~/.virtualenvs/data-science/.venv
-uv deactivate
-
-uv activate ./local-project  # Activate ./local-project/.venv
-```
-
 ## Troubleshooting
 
 If you encounter issues, try the following:
