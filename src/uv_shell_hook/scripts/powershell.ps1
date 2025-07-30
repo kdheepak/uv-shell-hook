@@ -37,7 +37,6 @@ function uv {
             $searchPaths = @(
                 (Join-Path $inputPath ".venv"),
                 $inputPath,
-                (Join-Path $workonHome $inputPath ".venv"),
                 (Join-Path $workonHome $inputPath)
             )
 

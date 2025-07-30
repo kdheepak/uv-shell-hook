@@ -31,7 +31,7 @@ function uv --wraps=uv --description 'Enhanced uv with virtual environment activ
 
             # Search for virtual environment
             set -l venv_path ""
-            set -l search_paths "$input_path/.venv" "$input_path" "$workon_home/$input_path/.venv" "$workon_home/$input_path"
+            set -l search_paths "$input_path/.venv" "$input_path" "$workon_home/$input_path"
 
             for path in $search_paths
                 if test -d "$path" -a \( -f "$path/bin/activate" -o -f "$path/Scripts/activate" \)

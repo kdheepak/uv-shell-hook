@@ -22,7 +22,7 @@ if "%workon_home%"=="" set "workon_home=%USERPROFILE%\.virtualenvs"
 
 rem Search for venv
 set "venv_path="
-set "search_paths=%input_path%\.venv;%input_path%;%workon_home%\%input_path%\.venv;%workon_home%\%input_path%"
+set "search_paths=%input_path%\.venv;%input_path%;%workon_home%\%input_path%"
 
 for %%p in (%search_paths:;= %) do (
     if exist "%%p\Scripts\activate.bat" (
