@@ -76,7 +76,7 @@ def _get_fish_function():
 
 def _get_cmd_batch():
     """Get the CMD batch script code for uv command override."""
-    return _get_script_content("cmd.bat")
+    return _get_script_content("cmd.cmd")
 
 
 def get_installation_instructions(shell: str) -> str:
