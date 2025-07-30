@@ -98,6 +98,3 @@ function uv --wraps=uv --description 'Enhanced uv with virtual environment activ
             command uv $argv
     end
 end
-
-# Add completion support for fish
-complete -c uv -n '__fish_is_first_token' -a 'activate deactivate' -d 'Virtual environment commands'

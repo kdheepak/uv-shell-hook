@@ -92,12 +92,3 @@ function uv {
         }
     }
 }
-
-# Add tab completion
-Register-ArgumentCompleter -CommandName 'uv' -ScriptBlock {
-    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-
-    if ($commandAst.CommandElements.Count -eq 1) {
-        @('activate', 'deactivate') | Where-Object { $_ -like "$wordToComplete*" }
-    }
-}
