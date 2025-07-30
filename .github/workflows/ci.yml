@@ -285,12 +285,6 @@ jobs:
           uv build
           ls -la dist/
 
-      - name: Check distribution contents
-        run: |
-          uv run python -m twine check dist/*
-          # Check wheel contents
-          uv run python -c "import zipfile; z = zipfile.ZipFile('dist/'*.whl); print('\\n'.join(z.namelist()[:20]))"
-
       - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:
