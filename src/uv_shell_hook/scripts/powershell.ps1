@@ -42,14 +42,9 @@ function uv {
         }
 
         'deactivate' {
-            if ($env:VIRTUAL_ENV) {
-                if (Get-Command deactivate -ErrorAction SilentlyContinue) {
-                    deactivate
-                    Write-Host "Deactivated: $env:VIRTUAL_ENV" -ForegroundColor Green
-                } else {
-                    Write-Host "deactivate function not available" -ForegroundColor Red
-                    exit 1
-                }
+            if ($env:VIRTUAL_ENV -and (Get-Command deactivate -ErrorAction SilentlyContinue)) {
+                deactivate
+                Write-Host "Deactivated: $env:VIRTUAL_ENV" -ForegroundColor Green
             } else {
                 Write-Host "No virtual environment is active" -ForegroundColor Yellow
                 exit 1
