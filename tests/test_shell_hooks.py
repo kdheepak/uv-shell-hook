@@ -165,7 +165,7 @@ def run_cmd_with_hook(
 ) -> subprocess.CompletedProcess:
     """Run a cmd.exe command with the shell hook sourced from file."""
     hook_path = get_short_path_name(str(hook_file.resolve()))
-    full_command = f'call "{hook_path}" && {command}'
+    full_command = f"call {hook_path} && {command}"
 
     return subprocess.run(
         ["cmd", "/d", "/c", full_command],
