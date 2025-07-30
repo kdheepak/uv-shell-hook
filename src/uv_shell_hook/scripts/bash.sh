@@ -13,25 +13,25 @@ uv() {
         activate)
             local input_path="${2:-.}"
             local venv_path=""
-            local workon_home="${WORKON_HOME:-$HOME/.virtualenvs}"
+            local virtualenvs_folder="$HOME/.virtualenvs"
 
             # Normalize input path
             input_path="${input_path%/}"  # Remove trailing slash
 
-            # Search for virtual environment
-            local search_paths=(
-                "${input_path}/.venv"
-                "${input_path}"
-                "${workon_home}/${input_path}/.venv"
-                "${workon_home}/${input_path}"
-            )
-
-            for path in "${search_paths[@]}"; do
-                if [[ -d "$path" ]] && [[ -f "$path/bin/activate" || -f "$path/Scripts/activate" ]]; then
-                    venv_path="$path"
-                    break
-                fi
-            done
+           # Check multiple locations for the virtual environment
+            if [[ -d "${input_path}/.venv" ]]; then
+                # If the input path contains a .venv subdirectory, use that
+                venv_path="${input_path}/.venv"
+            elif [[ -d $input_path && $input_path == */.venv ]]; then
+                # Use the path as-is if it exists and ends with .venv
+                venv_path="$input_path"
+            elif [[ -d "${virtualenvs_folder}/${input_path}/.venv" ]]; then
+                # Check in ~/.virtualenvs/name-of-env/.venv
+                venv_path="${virtualenvs_folder}/${input_path}/.venv"
+            elif [[ -d "${virtualenvs_folder}/${input_path}" ]]; then
+                # Also check ~/.virtualenvs/name-of-env directly (without .venv)
+                venv_path="${virtualenvs_folder}/${input_path}"
+            fi
 
             # Determine activation script location based on platform
             local activate_script
@@ -46,21 +46,21 @@ uv() {
                 echo -e "${RED}${BOLD}Error:${NOCOLOR} ${RED}Virtual environment not found${NOCOLOR}" >&2
                 echo -e "${DIM}Searched for:${NOCOLOR} ${YELLOW}${input_path}${NOCOLOR}" >&2
                 echo -e "${DIM}Locations checked:${NOCOLOR}" >&2
-                printf '%s\n' "${search_paths[@]}" | sed 's/^/  • /' >&2
+                echo -e "  - ${CYAN}${virtualenvs_folder}/${input_path}/.venv${NOCOLOR}" >&2
+                echo -e "  - ${CYAN}${virtualenvs_folder}/${input_path}${NOCOLOR}" >&2
+                echo -e "  - ${CYAN}${input_path}/.venv${NOCOLOR}" >&2
+                echo -e "  - ${CYAN}${input_path}${NOCOLOR}" >&2
+                echo -e "${DIM}You can also create a virtual environment using:${NOCOLOR}" >&2
+                echo -e "${CYAN}uv venv <name-of-env>${NOCOLOR}" >&2
+
                 return 1
             fi
 
             # Source the activation script
             if [[ -f "$activate_script" ]]; then
                 # shellcheck source=/dev/null
-                . "$activate_script"
+                source "$activate_script"
                 echo -e "${GREEN}${BOLD}✓${NOCOLOR} ${GREEN}Activated:${NOCOLOR} ${CYAN}${venv_path}${NOCOLOR}"
-
-                # Show Python version for confirmation
-                if command -v python >/dev/null 2>&1; then
-                    local py_version=$(python --version 2>&1 | cut -d' ' -f2)
-                    echo -e "${DIM}  Python ${py_version}${NOCOLOR}"
-                fi
             else
                 echo -e "${RED}${BOLD}Error:${NOCOLOR} ${RED}Activation script not found: ${YELLOW}${activate_script}${NOCOLOR}" >&2
                 return 1

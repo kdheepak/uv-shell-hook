@@ -8,8 +8,8 @@ shells and operating systems.
 
 - **Cross-platform support**: Works on Linux, macOS, and Windows
 - **Multi-shell support**: bash, zsh, Fish, PowerShell, and Windows CMD
-- **Virtual environment discovery**: Automatically finds virtual environments in multiple locations
 - **Consistent interface**: Same `uv activate` and `uv deactivate` commands across all shells
+- **Virtual environment discovery**: Automatically finds virtual environments in multiple locations
 
 ## Installation
 
