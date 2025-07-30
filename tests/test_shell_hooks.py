@@ -172,6 +172,7 @@ def run_cmd_with_hook(
         cwd=cwd,
         capture_output=True,
         text=True,
+        shell=True,
     )
 
 
