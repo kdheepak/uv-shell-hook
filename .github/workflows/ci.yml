@@ -10,7 +10,11 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.13"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,6 +24,9 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
       - name: Install the project
         run: uv sync --locked --all-extras --dev
 
@@ -28,6 +35,39 @@ jobs:
 
       - name: Run type checking
         run: uvx ty check
+
+      - name: Test CLI installation
+        run: uv run uv-shell-hook --version
+
+      - name: Test shell detection
+        run: uv run uv-shell-hook test
+
+      - name: Test bash output (Unix only)
+        if: runner.os != 'Windows'
+        run: uv run uv-shell-hook bash
+
+      - name: Test zsh output (Unix only)
+        if: runner.os != 'Windows'
+        run: uv run uv-shell-hook zsh
+
+      - name: Test fish output (Unix only)
+        if: runner.os != 'Windows'
+        run: uv run uv-shell-hook fish
+
+      - name: Test PowerShell output (Windows only)
+        if: runner.os == 'Windows'
+        run: uv run uv-shell-hook powershell
+
+      - name: Test CMD output (Windows only)
+        if: runner.os == 'Windows'
+        run: uv run uv-shell-hook cmd
+
+      - name: Test install-instructions with dry-run
+        run: uv run uv-shell-hook install-instructions --dry-run
+
+      - name: Test bash hook functionality (Unix only)
+        if: runner.os != 'Windows'
+        run: ./tests/test_bash_hook.sh
 
   publish:
     if: github.event_name == 'release' && github.event.action == 'published'
