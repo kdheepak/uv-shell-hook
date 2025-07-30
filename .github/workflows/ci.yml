@@ -65,9 +65,8 @@ jobs:
       - name: Test install-instructions with dry-run
         run: uv run uv-shell-hook install-instructions --dry-run
 
-      - name: Test bash hook functionality (Unix only)
-        if: runner.os != 'Windows'
-        run: ./tests/test_bash_hook.sh
+      - name: Run pytest tests
+        run: uv run pytest tests/ -v
 
   publish:
     if: github.event_name == 'release' && github.event.action == 'published'

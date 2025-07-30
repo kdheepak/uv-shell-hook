@@ -29,6 +29,9 @@ dirty = "{base_version}+d{build_date:%Y%m%d}"
 
 distance-dirty = "{next_version}.dev{distance}+{vcs}{rev}.d{build_date:%Y%m%d}"
 
+[dependency-groups]
+dev = ["pytest>=8.4.1"]
+
 [tool.versioningit]
 default-version = "0.0.0.dev0"
 
