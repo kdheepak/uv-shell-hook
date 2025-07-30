@@ -9,17 +9,21 @@ function uv {
 
     switch ($Command) {
         'activate' {
-            $Path = if ($Args) { $Args[0] } else { '.venv' }
-
-            # Check common venv locations
-            $VenvPath = $null
             $WorkonHome = if ($env:WORKON_HOME) { $env:WORKON_HOME } else { "$env:USERPROFILE\.virtualenvs" }
-            $Locations = @(
-                (Join-Path (Get-Location) $Path),
-                (Join-Path (Get-Location) '.venv'),
-                (Join-Path $WorkonHome $Path)
-            )
 
+            if ($Args) {
+                $Name = $Args[0]
+                $Locations = @(
+                    (Join-Path (Get-Location) $Name),
+                    (Join-Path $WorkonHome $Name)
+                )
+            } else {
+                $Locations = @(
+                    (Join-Path (Get-Location) '.venv')
+                )
+            }
+
+            $VenvPath = $null
             foreach ($Loc in $Locations) {
                 $ActivateScript = Join-Path $Loc 'Scripts\activate.ps1'
                 if (Test-Path $ActivateScript) {
@@ -32,7 +36,7 @@ function uv {
                 & (Join-Path $VenvPath 'Scripts\activate.ps1')
                 Write-Host "Activated: $VenvPath" -ForegroundColor Green
             } else {
-                Write-Host "Virtual environment not found: $Path" -ForegroundColor Red
+                Write-Host "Virtual environment not found: $($Args[0])" -ForegroundColor Red
                 exit 1
             }
         }
