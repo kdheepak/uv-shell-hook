@@ -13,10 +13,11 @@ function uv {
 
             # Check common venv locations
             $VenvPath = $null
+            $WorkonHome = if ($env:WORKON_HOME) { $env:WORKON_HOME } else { "$env:USERPROFILE\.virtualenvs" }
             $Locations = @(
                 (Join-Path (Get-Location) $Path),
                 (Join-Path (Get-Location) '.venv'),
-                (Join-Path ($env:WORKON_HOME ?? "$env:USERPROFILE\.virtualenvs") $Path)
+                (Join-Path $WorkonHome $Path)
             )
 
             foreach ($Loc in $Locations) {
