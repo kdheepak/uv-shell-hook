@@ -18,20 +18,20 @@ uv() {
             # Normalize input path
             input_path="${input_path%/}"  # Remove trailing slash
 
-           # Check multiple locations for the virtual environment
-            if [[ -d "${input_path}/.venv" ]]; then
-                # If the input path contains a .venv subdirectory, use that
-                venv_path="${input_path}/.venv"
-            elif [[ -d $input_path && $input_path == */.venv ]]; then
-                # Use the path as-is if it exists and ends with .venv
-                venv_path="$input_path"
-            elif [[ -d "${virtualenvs_folder}/${input_path}/.venv" ]]; then
-                # Check in ~/.virtualenvs/name-of-env/.venv
-                venv_path="${virtualenvs_folder}/${input_path}/.venv"
-            elif [[ -d "${virtualenvs_folder}/${input_path}" ]]; then
-                # Also check ~/.virtualenvs/name-of-env directly (without .venv)
-                venv_path="${virtualenvs_folder}/${input_path}"
-            fi
+          # Check multiple locations for the virtual environment activation script
+          if [[ -f "${input_path}/.venv/Scripts/activate" ]]; then
+            venv_path="${input_path}/.venv"
+          elif [[ -f "${input_path}/.venv/bin/activate" ]]; then
+            venv_path="${input_path}/.venv"
+          elif [[ -f "${input_path}/Scripts/activate" ]]; then
+            venv_path="${input_path}"
+          elif [[ -f "${input_path}/bin/activate" ]]; then
+            venv_path="${input_path}"
+          elif [[ -f "${virtualenvs_folder}/${input_path}/Scripts/activate" ]]; then
+            venv_path="${virtualenvs_folder}/${input_path}"
+          elif [[ -f "${virtualenvs_folder}/${input_path}/bin/activate" ]]; then
+            venv_path="${virtualenvs_folder}/${input_path}"
+          fi
 
             # Determine activation script location based on platform
             local activate_script
