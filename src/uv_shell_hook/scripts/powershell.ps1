@@ -1,93 +1,136 @@
 function uv {
-    param([Parameter(ValueFromRemainingArguments=$true)]$Args)
+    param(
+        [Parameter(Position=0)]
+        [string]$Command,
 
-    # Enhanced color support with fallback
-    if ($Host.UI.SupportsVirtualTerminal) {
-        $RED = "`e[0;31m"
-        $GREEN = "`e[0;32m"
-        $YELLOW = "`e[0;33m"
-        $CYAN = "`e[0;36m"
-        $BOLD = "`e[1m"
-        $DIM = "`e[2m"
-        $NOCOLOR = "`e[0m"
-    } else {
-        # Fallback for older PowerShell versions
-        $RED = ""
-        $GREEN = ""
-        $YELLOW = ""
-        $CYAN = ""
-        $BOLD = ""
-        $DIM = ""
-        $NOCOLOR = ""
+        [Parameter(Position=1, ValueFromRemainingArguments=$true)]
+        [string[]]$Args
+    )
+
+    # Logging helper functions
+    function Info([string]$Message) {
+        Write-Host "✓ " -ForegroundColor Green -NoNewline
+        Write-Host $Message -ForegroundColor Green
     }
 
-    if ($Args.Count -eq 0) {
-        & uv.exe
+    function Warn([string]$Message) {
+        Write-Host "Warning: " -ForegroundColor Yellow -NoNewline
+        Write-Host $Message -ForegroundColor Yellow
+    }
+
+    function Error([string]$Message) {
+        Write-Host "Error: " -ForegroundColor Red -NoNewline
+        Write-Host $Message -ForegroundColor Red
+    }
+
+    function Note([string]$Message) {
+        Write-Host $Message -ForegroundColor DarkGray
+    }
+
+    if (-not $Command) {
+        Write-Host "Usage: " -NoNewline -ForegroundColor White
+        Write-Host "uv {activate|deactivate|...}"
         return
     }
 
-    switch ($Args[0]) {
+    switch ($Command) {
         "activate" {
-            $inputPath = if ($Args.Count -gt 1) { $Args[1] } else { "." }
-            $inputPath = $inputPath.TrimEnd('/', '\')
-            $venvPath = $null
-            $workonHome = if ($env:WORKON_HOME) { $env:WORKON_HOME } else { Join-Path $HOME ".virtualenvs" }
+            $InputPath = if ($Args.Count -gt 0) { $Args[0] } else { "." }
+            $VenvPath = ""
+            $VirtualenvsFolder = if ($env:WORKON_HOME) { $env:WORKON_HOME } else { Join-Path $env:USERPROFILE ".virtualenvs" }
+            $ActivateScript = ""
 
-            # Search paths
-            $searchPaths = @(
-                (Join-Path $inputPath ".venv"),
-                $inputPath,
-                (Join-Path $workonHome $inputPath)
+            # Normalize input path
+            $InputPath = $InputPath.TrimEnd('\', '/')
+
+            # Resolve relative paths
+            if ($InputPath -eq ".") {
+                $InputPath = Get-Location
+            } elseif (-not [System.IO.Path]::IsPathRooted($InputPath)) {
+                $InputPath = Join-Path (Get-Location) $InputPath
+            }
+
+            # Virtual environment detection
+            $PossiblePaths = @(
+                (Join-Path $InputPath ".venv"),
+                $InputPath,
+                (Join-Path $VirtualenvsFolder $InputPath),
+                (Join-Path $VirtualenvsFolder (Split-Path $InputPath -Leaf))
             )
 
-            # Find the first existing venv
-            foreach ($path in $searchPaths) {
-                if ((Test-Path $path -PathType Container) -and
-                    (Test-Path (Join-Path $path "Scripts" "Activate.ps1") -PathType Leaf)) {
-                    $venvPath = $path
-                    break
+            foreach ($Path in $PossiblePaths) {
+                if (Test-Path $Path -PathType Container) {
+                    # Check for Windows-style venv
+                    if (Test-Path (Join-Path $Path "Scripts\activate.ps1")) {
+                        $VenvPath = $Path
+                        $ActivateScript = Join-Path $Path "Scripts\activate.ps1"
+                        break
+                    }
+                    # Check for Unix-style venv (in case of WSL or cross-platform)
+                    elseif (Test-Path (Join-Path $Path "bin\activate")) {
+                        $VenvPath = $Path
+                        $ActivateScript = Join-Path $Path "Scripts\activate.ps1"
+                        # Note: PowerShell still needs the .ps1 script even if bin/activate exists
+                        if (-not (Test-Path $ActivateScript)) {
+                            Error "PowerShell activation script not found. This venv may not be compatible with PowerShell."
+                            return
+                        }
+                        break
+                    }
                 }
             }
 
-            if (-not $venvPath) {
-                Write-Host "${RED}${BOLD}Error:${NOCOLOR} ${RED}Virtual environment not found${NOCOLOR}" -ForegroundColor Red
-                Write-Host "${DIM}Searched for:${NOCOLOR} ${YELLOW}$inputPath${NOCOLOR}"
-                Write-Host "${DIM}Locations checked:${NOCOLOR}"
-                $searchPaths | ForEach-Object { Write-Host "  • $_" }
-                return 1
+            # Handle missing venv
+            if (-not $VenvPath -or -not (Test-Path $VenvPath)) {
+                Error "Virtual environment not found"
+                Note "Searched for: $InputPath"
+                Note "Locations checked:"
+                Write-Host "  - " -NoNewline -ForegroundColor DarkGray
+                Write-Host (Join-Path $VirtualenvsFolder "$InputPath\.venv") -ForegroundColor Cyan
+                Write-Host "  - " -NoNewline -ForegroundColor DarkGray
+                Write-Host (Join-Path $VirtualenvsFolder $InputPath) -ForegroundColor Cyan
+                Write-Host "  - " -NoNewline -ForegroundColor DarkGray
+                Write-Host (Join-Path $InputPath ".venv") -ForegroundColor Cyan
+                Write-Host "  - " -NoNewline -ForegroundColor DarkGray
+                Write-Host $InputPath -ForegroundColor Cyan
+                Note "You can create a virtual environment using:"
+                Write-Host "uv venv <name-of-env>" -ForegroundColor Cyan
+                return
             }
 
-            # Activate
-            $activateScript = Join-Path $venvPath "Scripts" "Activate.ps1"
-            & $activateScript
-
-            Write-Host "${GREEN}${BOLD}✓${NOCOLOR} ${GREEN}Activated:${NOCOLOR} ${CYAN}$venvPath${NOCOLOR}" -ForegroundColor Green
-
-            # Show Python version
-            if (Get-Command python -ErrorAction SilentlyContinue) {
-                $pyVersion = & python --version 2>&1
-                Write-Host "${DIM}  $pyVersion${NOCOLOR}"
+            # Activate the environment
+            if (Test-Path $ActivateScript) {
+                & $ActivateScript
+                Info "Activated: $VenvPath"
+            } else {
+                Error "Activation script not found: $ActivateScript"
             }
         }
 
         "deactivate" {
-            if (-not $env:VIRTUAL_ENV) {
-                Write-Host "${YELLOW}${BOLD}Warning:${NOCOLOR} ${YELLOW}No virtual environment is active${NOCOLOR}" -ForegroundColor Yellow
-                return 1
+            $OldVenv = $env:VIRTUAL_ENV
+
+            if (-not $OldVenv) {
+                Warn "No virtual environment is active"
+                return
             }
 
-            $oldVenv = $env:VIRTUAL_ENV
+            # Check if deactivate function exists
             if (Get-Command deactivate -ErrorAction SilentlyContinue) {
                 deactivate
-                Write-Host "${YELLOW}${BOLD}✗${NOCOLOR} ${YELLOW}Deactivated:${NOCOLOR} ${CYAN}$oldVenv${NOCOLOR}" -ForegroundColor Yellow
+                Info "Deactivated: $OldVenv"
             } else {
-                Write-Host "${RED}${BOLD}Error:${NOCOLOR} ${RED}deactivate function not available${NOCOLOR}" -ForegroundColor Red
-                return 1
+                Error "deactivate function not available"
             }
         }
 
         default {
-            & uv.exe @Args
+            # Pass all other commands to the actual uv executable
+            if ($Args.Count -gt 0) {
+                & uv.exe $Command @Args
+            } else {
+                & uv.exe $Command
+            }
         }
     }
 }
