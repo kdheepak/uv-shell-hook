@@ -27,6 +27,17 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
+      - name: Install shells (Unix only)
+        if: runner.os != 'Windows'
+        run: |
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y zsh fish
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            brew install fish
+            # zsh is already installed on macOS
+          fi
+
       - name: Install the project
         run: uv sync --locked --all-extras --dev
 

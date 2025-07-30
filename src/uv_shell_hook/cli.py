@@ -13,7 +13,7 @@ from rich.syntax import Syntax
 from .version import __version__
 
 # Initialize console at module level
-console = Console()
+console = Console(legacy_windows=True)
 app = typer.Typer(help=__doc__, add_completion=False)
 
 
@@ -143,14 +143,18 @@ def install_instructions(
 @app.command()
 def zsh():
     """Print zsh shell function for uv command override."""
-    syntax = Syntax(_get_script_content("bash.sh"), "zsh", theme="github", line_numbers=False)
+    syntax = Syntax(
+        _get_script_content("bash.sh"), "zsh", theme="github", line_numbers=False
+    )
     console.print(syntax)
 
 
 @app.command()
 def bash():
     """Print bash shell function for uv command override."""
-    syntax = Syntax(_get_script_content("bash.sh"), "bash", theme="github", line_numbers=False)
+    syntax = Syntax(
+        _get_script_content("bash.sh"), "bash", theme="github", line_numbers=False
+    )
     console.print(syntax)
 
 
@@ -193,7 +197,9 @@ def test():
     workon = os.environ.get("WORKON_HOME", os.path.expanduser("~/.virtualenvs"))
     for template in VENV_SEARCH_PATHS:
         path = template.format(input_path="myproject", workon_home=workon)
-        exists_mark = ":heavy_check_mark:" if os.path.exists(os.path.expanduser(path)) else ":x:"
+        exists_mark = (
+            ":heavy_check_mark:" if os.path.exists(os.path.expanduser(path)) else ":x:"
+        )
         exists_color = "green" if os.path.exists(os.path.expanduser(path)) else "red"
         console.print(f"  [{exists_color}]{exists_mark}[/] {path}")
 
