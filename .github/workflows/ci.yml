@@ -260,6 +260,7 @@ jobs:
           uv run uv-shell-hook install-instructions --shell powershell || exit 0
 
       - name: Run pytest
+        shell: pwsh
         run: uv run pytest tests/ -v
 
   build:
